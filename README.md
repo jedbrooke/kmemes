@@ -42,3 +42,7 @@ classification. Perhpas we need something more like PCA?
 possibly figure out some kind of optimizations where when we calculate all the
 distances for group membership. we can possibly rule out the search area to 
 members that we know are certainly not members of a given group.
+
+TODO:
+make python script to convert mnist data into more workable format
+make python script to display output mean
