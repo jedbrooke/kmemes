@@ -18,7 +18,7 @@ int main(int argc, char const *argv[])
     }
     int data_fd = fileno(data_fp);
 
-    int N = 10000;
+    int N = 1000;
     feature_type* data_all = (feature_type *) malloc(N * MNIST_DATA_SIZE * sizeof(feature_type*));
     feature_type** data = (feature_type**) malloc(N * sizeof(feature_type*));
     for (int i = 0; i < N; i++) {
@@ -34,14 +34,14 @@ int main(int argc, char const *argv[])
     feature_type** means = kmeans(data, N, MNIST_DATA_SIZE, k);
 
     // save the kmeans to a file so we can view them with a python script
-    FILE* output_fp = fopen(output_file,"wb");
+    FILE* output_fp = fopen(output_file,"w");
     if(!output_fp) {
         perror("fopen");
         exit(1);
     }
     for (int i = 0; i < k; i++) {
         for (int j = 0; j < MNIST_DATA_SIZE; j++) {
-            fprintf(output_fp,"%d,",means[i][j]);
+            fprintf(output_fp,"%u,",means[i][j]);
         }
         fprintf(output_fp,"\n");
     }

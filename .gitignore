@@ -4,3 +4,4 @@ mnist_test
 mnist.dat
 means.dat
 mnist
+*.o

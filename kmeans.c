@@ -112,7 +112,7 @@ feature_type** kmeans(feature_type** data, int N, int f_size, int k) {
 
         Jscore = (float) sum(D,N) / N;
 
-        keep_looping = fabs(Jscore - prev_j) < (1e-6 * Jscore) || iterations++ > max_iterations;
+        keep_looping = fabs(Jscore - prev_j) < (threshold * Jscore) || iterations++ > max_iterations;
     }
 
     return Z;
