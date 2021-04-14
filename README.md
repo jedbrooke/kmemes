@@ -44,5 +44,22 @@ distances for group membership. we can possibly rule out the search area to
 members that we know are certainly not members of a given group.
 
 TODO:
-make python script to convert mnist data into more workable format
-make python script to display output mean
+ - [x] make python script to convert mnist data into more workable format
+ - [x] make python script to display output mean
+ - [] implement multithreading
+ - [] implement in CUDA
+
+ Timing results: 
+Mnist: 60000 samples
+| Method | real (s) | user (s) | sys (s) | epochs |
+|--------|------|------|-----|-------|
+| Python/Numpy* | 9,529.991 | 9,522.624 | 9,522.624 | ~64
+| Single Threaded C -O0 | 555.550 | 551.086 | 0.967 | 74
+| Single Threaded C -03 | 34.905 | 34.730 | 0.056 | 74
+| Pthread Mulithreaded N=6
+| Pthread Multithreaded N=12
+| CUDA
+| OpenCL?
+| Phi/OpenMP?
+
+*the python version crashed before finishing, I was too lazy to run it again and it's already clear that it is MUCH slower

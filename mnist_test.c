@@ -6,7 +6,7 @@
 #include "kmeans.h"
 
 const char* training_data = "mnist.dat";
-const char* output_file = "means.dat";
+const char* output_file = "means.csv";
 const int MNIST_DATA_SIZE = 28 * 28;
 
 int main(int argc, char const *argv[])
@@ -18,7 +18,7 @@ int main(int argc, char const *argv[])
     }
     int data_fd = fileno(data_fp);
 
-    int N = 1000;
+    int N = 60000;
     feature_type* data_all = (feature_type *) malloc(N * MNIST_DATA_SIZE * sizeof(feature_type*));
     feature_type** data = (feature_type**) malloc(N * sizeof(feature_type*));
     for (int i = 0; i < N; i++) {
