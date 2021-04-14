@@ -1,7 +1,8 @@
 .vscode
 .DS_Store
 mnist_test
-mnist.dat
-means.dat
+*.dat
+*.csv
 mnist
 *.o
+*.png
