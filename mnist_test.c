@@ -11,6 +11,16 @@ const int MNIST_DATA_SIZE = 28 * 28;
 
 int main(int argc, char const *argv[])
 {
+
+#ifdef OMP
+    int num_threads = 12;
+    if (argc > 1){
+        num_threads = atoi(argv[1]);
+    }
+    printf("using %d threads\n",num_threads);
+    printf("omp_threads: %d\n",omp_get_num_threads());
+#endif    
+
     FILE* data_fp = fopen(training_data,"rb");
     if(!data_fp) {
         perror("fopen");
@@ -23,7 +33,10 @@ int main(int argc, char const *argv[])
     feature_type** data = (feature_type**) malloc(N * sizeof(feature_type*));
     for (int i = 0; i < N; i++) {
         // read in one digit
-        read(data_fd,&data_all[i * MNIST_DATA_SIZE],MNIST_DATA_SIZE * sizeof(feature_type));
+        if (read(data_fd,&data_all[i * MNIST_DATA_SIZE],MNIST_DATA_SIZE * sizeof(feature_type)) < 0) {
+            perror("read");
+            exit(1);
+        }
         data[i] = &data_all[i * MNIST_DATA_SIZE];
     }
 
@@ -31,7 +44,11 @@ int main(int argc, char const *argv[])
 
     // run kmeans
     int k = 20;
+#ifdef OMP
+    feature_type** means = kmeans(data, N, MNIST_DATA_SIZE, k, num_threads);
+#else
     feature_type** means = kmeans(data, N, MNIST_DATA_SIZE, k);
+#endif
 
     // save the kmeans to a file so we can view them with a python script
     FILE* output_fp = fopen(output_file,"w");

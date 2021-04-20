@@ -10,7 +10,6 @@ uint sum(uint* a, uint n){
 }
 
 void add_vector_to_dest(uint* dest, feature_type* a, int n) {
-    // TODO: add proper mutex locking for multi-threading
     // experiment with coarse locking (lock each Zsums[i])
     // or fine locking (lock each Zums[i][j])
     for (int i = 0; i < n; i++) {
@@ -44,12 +43,29 @@ void vector_elementwise_square(uint* dest, uint* a, uint n) {
     from the result of k means.
 
 */
-feature_type** kmeans(feature_type** data, int N, int f_size, int k) {
+#ifdef OMP
+    feature_type** kmeans(feature_type** data, int N, int f_size, int k, int num_threads)
+#else
+    feature_type** kmeans(feature_type** data, int N, int f_size, int k) 
+#endif
+{
     printf("running kmeans!!\n");
     // Z holds the group representatives
     feature_type** Z = (feature_type**) malloc(k * sizeof(feature_type*));
     // store the intermediate sums for Z while summing up to find the means
     uint** Zsums = (uint**) malloc(k * sizeof(uint*));
+
+#ifdef OMP
+    omp_lock_t* Zsum_locks = (omp_lock_t*) malloc(k * sizeof(omp_lock_t));
+
+    for (int i = 0; i < k; i++) {
+        omp_init_lock(&Zsum_locks[i]);
+    }
+
+    int tid = 0;
+
+#endif
+
     for (int i = 0; i < k; i ++) {
         Z[i] = (feature_type*) malloc(f_size * sizeof(feature_type));
         Zsums[i] = (uint*) malloc(f_size * sizeof(uint));
@@ -63,7 +79,7 @@ feature_type** kmeans(feature_type** data, int N, int f_size, int k) {
 
     bool stop_looping = false;
 
-    int max_iterations = 100;
+    int max_iterations = 2;
     int iterations = 0;
 
     feature* features = (feature*) malloc(N * sizeof(feature));
@@ -89,11 +105,32 @@ feature_type** kmeans(feature_type** data, int N, int f_size, int k) {
         }
         bzero(Zcounts,k * sizeof(uint));
 
+
+#ifdef OMP
+    #pragma omp parallel private(tid)
+        {
+            tid = omp_get_thread_num();
+            if (tid < num_threads) {
+                printf("starting thread %d\n",tid);
+                for (int i = tid; i < N; i+=num_threads) {
+                    omp_set_lock(&Zsum_locks[features[i].group]);
+
+                    add_vector_to_dest(Zsums[features[i].group],features[i].features,f_size);
+                    Zcounts[features[i].group]++;
+
+                    omp_unset_lock(&Zsum_locks[features[i].group]);
+                }
+            }
+        }
+    /* end parallel */
+#else
         for (int i = 0; i < N; i++) {
-            // when we multi-thread it later we will need to implement proper locking
+            
             add_vector_to_dest(Zsums[features[i].group],features[i].features,f_size);
             Zcounts[features[i].group]++;
         }
+#endif
+
 
         for (int i = 0; i < k; i++) {
             divide_vector_by_scalar(Z[i],Zsums[i],Zcounts[i],f_size);

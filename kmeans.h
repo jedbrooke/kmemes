@@ -4,6 +4,10 @@
 #include <memory.h>
 #include <strings.h>
 
+#ifdef OMP
+    #include <omp.h>
+#endif
+
 
 // if source data is images we will likely have 0-255 pixel values
 typedef unsigned char uint8;
@@ -19,4 +23,8 @@ struct feature {
 };
 typedef struct feature feature;
 
+#ifdef OMP
+feature_type** kmeans(feature_type** data, int N, int f_size, int k, int num_threads);
+#else
 feature_type** kmeans(feature_type** data, int N, int f_size, int k);
+#endif
