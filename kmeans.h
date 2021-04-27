@@ -3,15 +3,11 @@
 #include <math.h>
 #include <memory.h>
 #include <strings.h>
+#include <stdio.h>
 
+#include "typedefs.h"
+#include "save_means.h"
 
-// if source data is images we will likely have 0-255 pixel values
-typedef unsigned char uint8;
-
-// poor man's template typing
-typedef uint8 feature_type;
-
-typedef unsigned int uint;
 
 struct feature {
     feature_type* features;

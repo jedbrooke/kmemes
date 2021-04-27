@@ -13,8 +13,11 @@ mnist.dat: mnist
 kmeans.o: kmeans.c kmeans.h
 	$(CC) -c -o kmeans.o kmeans.c $(CFLAGS)
 
-mnist_test: kmeans.o mnist_test.c mnist.dat
-	$(CC) -o mnist_test mnist_test.c kmeans.o
+save_means.o: save_means.c save_means.h
+	$(CC) -c -o save_means.o save_means.c $(CFLAGS)
+
+mnist_test: kmeans.o save_means.o mnist_test.c mnist.dat
+	$(CC) -o mnist_test mnist_test.c kmeans.o save_means.o
 
 
 .PHONY: clean

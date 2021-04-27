@@ -1,5 +1,11 @@
 #include "kmeans.h"
-#include <stdio.h>
+
+/* 
+    parameter for controlling saving of frames for an animation. 
+    0 means do no save any frames, just return the final result
+    N > 0 means save a frame every N iterations
+*/
+uint save_anim_rate = 1;
 
 uint sum(uint* a, uint n){
     uint sum = 0;
@@ -119,6 +125,12 @@ feature_type** kmeans(feature_type** data, int N, int f_size, int k) {
         printf("J = %0.5f\n",Jscore);
         printf("Diff = %0.5f\n",fabs(Jscore - prev_j));
         printf("Thresh = %0.5f\n",(threshold * Jscore));
+
+        if (save_anim_rate > 0 && iterations % save_anim_rate == 0) {
+            // save the current group representatives
+            save_means(Z, k, f_size);
+        }
+
         iterations++;
         stop_looping = fabs(Jscore - prev_j) < fabs(threshold * Jscore) || iterations >= max_iterations;
         prev_j = Jscore;

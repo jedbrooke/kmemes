@@ -3,7 +3,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include "typedefs.h"
 #include "kmeans.h"
+#include "save_means.h"
 
 const char* training_data = "mnist.dat";
 const char* output_file = "means.csv";
@@ -34,19 +36,7 @@ int main(int argc, char const *argv[])
     feature_type** means = kmeans(data, N, MNIST_DATA_SIZE, k);
 
     // save the kmeans to a file so we can view them with a python script
-    FILE* output_fp = fopen(output_file,"w");
-    if(!output_fp) {
-        perror("fopen");
-        exit(1);
-    }
-    for (int i = 0; i < k; i++) {
-        for (int j = 0; j < MNIST_DATA_SIZE; j++) {
-            fprintf(output_fp,"%u,",means[i][j]);
-        }
-        fprintf(output_fp,"\n");
-    }
-    fflush(output_fp);
-    fclose(output_fp);
+    save_means(means, k, MNIST_DATA_SIZE);
     
     return 0;
 }
