@@ -20,6 +20,7 @@ def load_from_web(data_url):
         sys.exit()
 
     json_data = json.loads(request_data.text)
+    print(json_data)
     with open(DATA_PATH,"w") as fh:
         fh.write(json.dumps(json_data))
 
