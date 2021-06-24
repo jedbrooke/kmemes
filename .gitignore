@@ -6,3 +6,7 @@ mnist_test
 mnist
 *.o
 *.png
+memes
+archive.zip
+db.json
+memes.json
