@@ -12,13 +12,13 @@ const int MNIST_DATA_SIZE = 28 * 28;
 int main(int argc, char const *argv[])
 {
 
-#ifdef OMP
+#if defined(OMP) || defined(PTHREAD)
     int num_threads = 12;
     if (argc > 1){
         num_threads = atoi(argv[1]);
     }
     printf("using %d threads\n",num_threads);
-    printf("omp_threads: %d\n",omp_get_num_threads());
+    // printf("omp_threads: %d\n",omp_get_num_threads());
 #endif    
 
     FILE* data_fp = fopen(training_data,"rb");
@@ -44,7 +44,7 @@ int main(int argc, char const *argv[])
 
     // run kmeans
     int k = 20;
-#ifdef OMP
+#if defined(OMP) || defined(PTHREAD)
     feature_type** means = kmeans(data, N, MNIST_DATA_SIZE, k, num_threads);
 #else
     feature_type** means = kmeans(data, N, MNIST_DATA_SIZE, k);

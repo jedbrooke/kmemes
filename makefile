@@ -16,11 +16,19 @@ kmeans.o: kmeans.c kmeans.h
 kmeans_omp.o: kmeans.c kmeans.h
 	$(CC) -c -o kmeans_omp.o kmeans.c -DOMP -fopenmp
 
+kmeans_pthread.o: kmeans.c kmeans.h
+	$(CC) -c -o kmeans_pthread.o kmeans.c $(CFLAGS) -DPTHREAD -lpthread
+
+
+
 mnist_test: kmeans.o mnist_test.c mnist.dat
 	$(CC) -o mnist_test mnist_test.c kmeans.o
 
 mnist_test_omp: kmeans_omp.o mnist_test.c mnist.dat
 	$(CC) -o mnist_test mnist_test.c kmeans_omp.o -DOMP -fopenmp
+
+mnist_test_pthread: kmeans_pthread.o mnist_test.c mnist.dat
+	$(CC) -o mnist_test mnist_test.c kmeans_pthread.o -DPTHREAD -lpthread
 
 
 

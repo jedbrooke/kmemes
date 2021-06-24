@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 def format_number(x):
@@ -13,7 +15,7 @@ def main():
         plt.imshow(format_number(means[i,:]),cmap="Greys")
         plt.xticks(())
         plt.yticks(())
-    plt.show()
+    plt.savefig("means.png")
 
 if __name__ == '__main__':
     main()
