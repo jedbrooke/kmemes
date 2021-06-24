@@ -7,6 +7,9 @@ mnist
 *.o
 *.png
 memes
+memes_resized
+kaggle_memes
 archive.zip
 db.json
 memes.json
+
