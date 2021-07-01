@@ -7,10 +7,10 @@ import time
 import shutil
 
 
+
 DATA_PATH = "/home/jedbrooke/source/kmemes/memes.json"
 IMAGE_DIR = "/home/jedbrooke/source/kmemes/memes"
-
-SUBREDDITS = ["memes","dankmemes","pics","itookapicture","photoshopbattles","wtfstockphotos","blender"]
+SUBREDDITS = ["memes","dankmemes","pics","itookapicture","photoshopbattles","wtfstockphotos"]
 AUTH_PATH = "auth.json"
 
 def load_from_web(data_url):
