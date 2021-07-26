@@ -10,7 +10,6 @@ uint sum(uint* a, uint n){
 }
 
 void add_vector_to_dest(uint* dest, feature_type* a, int n) {
-    // TODO: add proper mutex locking for multi-threading
     // experiment with coarse locking (lock each Zsums[i])
     // or fine locking (lock each Zums[i][j])
     for (int i = 0; i < n; i++) {
@@ -37,6 +36,22 @@ void vector_elementwise_square(uint* dest, uint* a, uint n) {
     }
 }
 
+
+#ifdef PTHREAD
+void* big_sum(void* args) {
+    big_sum_args* values = (big_sum_args*) args;
+    // printf("in big_sum for thread %d\n",values->id);
+    for (int i = values->id; i < values->N; i += values->stride) {
+        pthread_mutex_lock(&values->Zsums_locks[values->features[i].group]);   
+        add_vector_to_dest(values->Zsums[values->features[i].group],values->features[i].features,values->f_size);
+        values->Zcounts[values->features[i].group]++;
+        pthread_mutex_unlock(&values->Zsums_locks[values->features[i].group]);
+    }
+    return NULL;
+}
+#endif
+
+
 /*  
     takes in an array of N feature vectors,
     each with f features.
@@ -44,12 +59,27 @@ void vector_elementwise_square(uint* dest, uint* a, uint n) {
     from the result of k means.
 
 */
-feature_type** kmeans(feature_type** data, int N, int f_size, int k) {
-    printf("running kmeans!!\n");
+#if defined(OMP) || defined(PTHREAD)
+    feature_type** kmeans(feature_type** data, int N, int f_size, int k, int num_threads) {
+#else
+    feature_type** kmeans(feature_type** data, int N, int f_size, int k) {
+    int num_threads = 1;
+#endif
+    printf("running kmeans with %d threads!!\n",num_threads);
     // Z holds the group representatives
     feature_type** Z = (feature_type**) malloc(k * sizeof(feature_type*));
     // store the intermediate sums for Z while summing up to find the means
     uint** Zsums = (uint**) malloc(k * sizeof(uint*));
+ 
+    feature* features = (feature*) malloc(N * sizeof(feature));
+    for (int i = 0; i < N; i++) {
+        features[i].features = data[i];
+        // random initialize group
+        // not random for now so we can get consistent results while testing
+        features[i].group = i % k;
+    }
+
+
     for (int i = 0; i < k; i ++) {
         Z[i] = (feature_type*) malloc(f_size * sizeof(feature_type));
         Zsums[i] = (uint*) malloc(f_size * sizeof(uint));
@@ -66,18 +96,39 @@ feature_type** kmeans(feature_type** data, int N, int f_size, int k) {
     int max_iterations = 100;
     int iterations = 0;
 
-    feature* features = (feature*) malloc(N * sizeof(feature));
-    for (int i = 0; i < N; i++) {
-        features[i].features = data[i];
-        // random initialize group
-        // not random for now so we can get consistent results while testing
-        features[i].group = i % k;
-    }
+    
 
     uint* D = (uint*) malloc(N * sizeof(uint));
 
     uint* temp = (uint*) malloc(f_size * sizeof(uint));
     uint temp_d;
+
+#ifdef OMP
+    // omp_lock_t* Zsum_locks = (omp_lock_t*) malloc(k * sizeof(omp_lock_t));
+
+    // for (int i = 0; i < k; i++) {
+        // omp_init_lock(&Zsum_locks[i]);
+    // }
+
+    int tid;
+#elif PTHREAD
+    pthread_mutex_t* Zsums_locks = (pthread_mutex_t*) malloc(k * sizeof(pthread_mutex_t));
+    for (int i = 0; i < k; i++) {
+        pthread_mutex_init(&Zsums_locks[i],NULL);
+    }
+    big_sum_args* big_sum_args_list = (big_sum_args*) malloc(num_threads * sizeof(big_sum_args));
+    for (int i = 0; i < num_threads; i++){
+        big_sum_args_list[i].f_size = f_size;
+        big_sum_args_list[i].features = features;
+        big_sum_args_list[i].id = i;
+        big_sum_args_list[i].N = N;
+        big_sum_args_list[i].stride = num_threads;
+        big_sum_args_list[i].Zcounts = Zcounts;
+        big_sum_args_list[i].Zsums = Zsums;
+        big_sum_args_list[i].Zsums_locks = Zsums_locks;
+    }
+
+#endif
 
     // main kmeans iteration loop
     while(!stop_looping) {
@@ -89,11 +140,42 @@ feature_type** kmeans(feature_type** data, int N, int f_size, int k) {
         }
         bzero(Zcounts,k * sizeof(uint));
 
+
+#ifdef OMP
+    #pragma omp parallel private(tid)
+        {
+            tid = omp_get_thread_num();
+            if (tid < num_threads) {
+                printf("starting thread %d\n",tid);
+                for (int i = tid; i < N; i+=num_threads) {
+                    // omp_set_lock(&Zsum_locks[features[i].group]);
+
+                    add_vector_to_dest(Zsums[features[i].group],features[i].features,f_size);
+                    Zcounts[features[i].group]++;
+
+                    // omp_unset_lock(&Zsum_locks[features[i].group]);
+                }
+            }
+        }
+    /* end parallel */
+#elif PTHREAD
+    pthread_t* threads = (pthread_t*) malloc(num_threads * sizeof(pthread_t));
+    for(int i = 0; i < num_threads; i++) {
+        // printf("starting thread %d\n", i);
+        pthread_create(&threads[i],NULL,big_sum,&big_sum_args_list[i]);
+    }
+    for(int i = 0; i < num_threads; i++) {
+        pthread_join(threads[i],NULL);
+    }
+    free(threads);
+
+#else
         for (int i = 0; i < N; i++) {
-            // when we multi-thread it later we will need to implement proper locking
             add_vector_to_dest(Zsums[features[i].group],features[i].features,f_size);
             Zcounts[features[i].group]++;
         }
+#endif
+
 
         for (int i = 0; i < k; i++) {
             divide_vector_by_scalar(Z[i],Zsums[i],Zcounts[i],f_size);
