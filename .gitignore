@@ -18,3 +18,5 @@ imgur_memes.txt
 auth.json
 *.so
 makefile
+mnist_gpu
+means
