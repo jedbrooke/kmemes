@@ -44,7 +44,7 @@ void vector_elementwise_square(uint* dest, uint* a, uint n) {
     from the result of k means.
 
 */
-feature_type** kmeans(feature_type** data, int N, int f_size, int k) {
+feature_type** kmeans(feature_type** data, int N, int f_size) {
     printf("running kmeans!!\n");
     // Z holds the group representatives
     feature_type** Z = (feature_type**) malloc(k * sizeof(feature_type*));
@@ -66,7 +66,7 @@ feature_type** kmeans(feature_type** data, int N, int f_size, int k) {
     int max_iterations = 100;
     int iterations = 0;
 
-    feature* features = (feature*) malloc(N * sizeof(feature));
+    observation* features = (observation*) malloc(N * sizeof(observation));
     for (int i = 0; i < N; i++) {
         features[i].features = data[i];
         // random initialize group

@@ -16,3 +16,5 @@ key.txt
 imgur_memes
 imgur_memes.txt
 auth.json
+*.so
+makefile

@@ -30,8 +30,7 @@ int main(int argc, char const *argv[])
     fclose(data_fp);
 
     // run kmeans
-    int k = 20;
-    feature_type** means = kmeans(data, N, MNIST_DATA_SIZE, k);
+    feature_type** means = kmeans(data, N, MNIST_DATA_SIZE);
 
     // save the kmeans to a file so we can view them with a python script
     FILE* output_fp = fopen(output_file,"w");
