@@ -28,11 +28,11 @@ members that we know are certainly not members of a given group.
 TODO:
  - [x] make python script to convert mnist data into more workable format
  - [x] make python script to display output mean
- - [] implement multithreading
+ - [ ] implement multithreading
  - [x] implement in CUDA
  - [x] scape memes from reddit
- - [] preprocess memes to separate images with a lot of text
- - [] work on batch loading system to deal with datasets larger than available RAM
+ - [ ] preprocess memes to separate images with a lot of text
+ - [ ] work on batch loading system to deal with datasets larger than available RAM
 
  Timing results: 
 Mnist: 60000 samples
