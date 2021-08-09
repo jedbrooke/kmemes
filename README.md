@@ -15,29 +15,11 @@ Goals:
 steps:
 web scraper to download photos
 
-pre-process photos for learning.
+test algorithm on MNIST hand written digit samples. (it's sort of the "hello world" of ML datasets)
 
-likely just use image-magick convert to convert them to bmp, resize if needed,
-then read into memory from there.
+if this goes well we can try learning on memes.
 
-start with 400x400 to reduce memory/time requirements
-or start with mnist database for initial algorithm, or the faces dataset
-experiment with augemnting data with simple transforms, scale, rotate,
-slight color adjust, etc.
-
-
-if this goes well we can try learning on videos
-
-just make each vector the flattened frame sequence of a video, with the audio 
-data in there too
-
-the temporal aspect of video might be too much for kmeans to learn, might need
-more advanced techniques.
-
-still it could be really fun.
-
-Is kmeans really meant for generating though? or is it more for unsupervised
-classification. Perhpas we need something more like PCA?
+Kmemes isn't really a generative algorithm so checkout meme-gan for my attempt at a GAN.
 
 possibly figure out some kind of optimizations where when we calculate all the
 distances for group membership. we can possibly rule out the search area to 
@@ -47,19 +29,29 @@ TODO:
  - [x] make python script to convert mnist data into more workable format
  - [x] make python script to display output mean
  - [] implement multithreading
- - [] implement in CUDA
+ - [x] implement in CUDA
+ - [x] scape memes from reddit
+ - [] preprocess memes to separate images with a lot of text
+ - [] work on batch loading system to deal with datasets larger than available RAM
 
  Timing results: 
 Mnist: 60000 samples
 | Method | real (s) | user (s) | sys (s) | epochs |
 |--------|------|------|-----|-------|
-| Python/Numpy* | 9,529.991 | 9,522.624 | 9,522.624 | ~64
+| Python/Numpy<sup>1</sup> | 9,529.991 | 9,522.624 | 9,522.624 | ~64
 | Single Threaded C -O0 | 555.550 | 551.086 | 0.967 | 74
 | Single Threaded C -03 | 34.905 | 34.730 | 0.056 | 74
-| Pthread Mulithreaded N=6
-| Pthread Multithreaded N=12
-| CUDA
+| OpenMP |
+| Pthread Mulithreaded |
+| CUDA<sup>2</sup> | 74.949 | 74.635 | 0.216 | 100
 | OpenCL?
-| Phi/OpenMP?
+| Intel Xeon Phi<sup>3</sup>?
 
-*the python version crashed before finishing, I was too lazy to run it again and it's already clear that it is MUCH slower
+<sup>1</sup>the python version crashed before finishing, I was too lazy to run it again and it's already clear that it is MUCH slower
+
+<sup>2</sup>Running on a Tesla M40 @1.1Ghz. Gpu version uses aboslute difference instead of absolute squared difference, so it converges differently. Final means are very similar, but not identical.
+Currently it is quite a bit slower than the CPU version, but hopefully it will scale better with larger images. 
+Also the Kernels are optimized for RGB data so it is actually duplicating the BW inputs 3 times to work properly, thus processing 3x the amount of data. So in theory you could divide the time by 3?
+
+<sup>3</sup> yes I have one. Why? for fun.
+
