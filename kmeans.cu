@@ -14,10 +14,6 @@ uint sum(uint* a, uint n){
 }
 
 
-#define BLOCK_SIZE 14
-#define ROW_SIZE 28
-
-
 #define CUDA_CALL(x) do {if((x)!=cudaSuccess) { \
     printf("Error at %s:%d\n",__FILE__,__LINE__);}} while(0)
 
@@ -82,7 +78,7 @@ void calculate_group_distances(const unsigned char* Z, const unsigned char* obse
                 
                 __shared__ u_int32_t row[ROW_SIZE];
                 if(threadIdx.x == 0) {
-                    const size_t pixel_offset = observation_offset + (posy * w) + ((posx + threadIdx.y) * 3);
+                    const size_t pixel_offset = observation_offset + (posy * w * 3) + ((posx + threadIdx.y) * 3);
                     row[threadIdx.y] = (0x0000) | (observations[pixel_offset + 0] << 16)
                                                 | (observations[pixel_offset + 1] <<  8)
                                                 | (observations[pixel_offset + 2] <<  0);
@@ -180,8 +176,6 @@ void find_min_distance_and_group(const uint* group_distances, uint* min_distance
 }
 
 
-
-
 // each thread will handle a single feature location across all observations
 // each block is BLOCK_SIZExBLOCK_SIZEx3
 // each x,y in a block will handle an x,y in the image
@@ -211,6 +205,16 @@ void calc_Zsums_for_group(const feature_type* observations, uint* groups, uint* 
         }
     }
 
+}
+
+__global__
+void print_arr(uint* arr, size_t N) {
+    if(threadIdx.x == 0 and blockIdx.x == 0) {
+        for(size_t i = 0; i < N; i++) {
+            printf("%u,",arr[i]);
+        }
+        printf("\n");
+    }
 }
 
 observation* kmeans_gpu(observation* data, size_t N, size_t h, size_t w, size_t d) {
@@ -253,7 +257,7 @@ observation* kmeans_gpu(observation* data, size_t N, size_t h, size_t w, size_t 
 
     float prev_j = 0;
     float Jscore = -1;
-    float threshold = 1e-6;
+    float threshold = 1e-4;
 
     bool stop_looping = false;
 
@@ -277,10 +281,14 @@ observation* kmeans_gpu(observation* data, size_t N, size_t h, size_t w, size_t 
 
     // standard 1 thread per pixel component block/grid size used by many kernels
     dim3 standardBlock(BLOCK_SIZE,BLOCK_SIZE,d);
+    printf("standard block: %d,%d,%d\n",standardBlock.x, standardBlock.y, standardBlock.z);
     dim3 standardGrid(h / BLOCK_SIZE, w / BLOCK_SIZE);
+    printf("standard grid: %d,%d,%d\n",standardGrid.x, standardGrid.y, standardGrid.z);
+
 
     // k * ROW_SIZE blocks for group distance kernel
     dim3 rowBlock(k,ROW_SIZE);
+    printf("row block grid: %d,%d,%d\n",rowBlock.x, rowBlock.y, rowBlock.z);
 
     // get num SMs, used for launching some kernels
     int numSMs;
@@ -302,11 +310,14 @@ observation* kmeans_gpu(observation* data, size_t N, size_t h, size_t w, size_t 
             calc_Zsums_for_group<<<standardGrid,standardBlock>>>(observations_cu, groups_cu, Z_sums_cu, g, N);
             cudaDeviceSynchronize();
         }
+        // printf("Zsums on gpu\n");
+        // print_arr<<<1,1>>>(Z_sums_cu, k);
         
         // calculate the counts for each group
         for(size_t i = 0; i < N; i++) {
             Zcounts[groups[i]] += 1;
         }
+
         // printf("Zcounts:\n");
         // for(size_t i = 0; i < k; i++) {
         //     printf("%d,",Zcounts[i]);
@@ -316,6 +327,9 @@ observation* kmeans_gpu(observation* data, size_t N, size_t h, size_t w, size_t 
         // send Zcounts to the gpu
         CUDA_CALL(cudaMemcpy(Zcounts_cu, Zcounts, k * sizeof(uint), cudaMemcpyHostToDevice));
         cudaDeviceSynchronize();
+        
+        printf("Zcounts on gpu\n");
+        print_arr<<<1,1>>>(Zcounts_cu, k);
 
         divide_Zsums<<<standardGrid,standardBlock>>>(Z_sums_cu, Z_cu, Zcounts_cu);
         cudaDeviceSynchronize();

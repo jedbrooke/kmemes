@@ -44,7 +44,7 @@ void vector_elementwise_square(uint* dest, uint* a, uint n) {
     from the result of k means.
 
 */
-feature_type** kmeans(feature_type** data, int N, int f_size) {
+observation* kmeans(observation* data, int N, int f_size) {
     printf("running kmeans!!\n");
     // Z holds the group representatives
     feature_type** Z = (feature_type**) malloc(k * sizeof(feature_type*));
@@ -59,19 +59,17 @@ feature_type** kmeans(feature_type** data, int N, int f_size) {
 
     float prev_j = 0;
     float Jscore = -1;
-    float threshold = 1e-6;
+    float threshold = 10e-3;
 
     bool stop_looping = false;
 
     int max_iterations = 100;
     int iterations = 0;
 
-    observation* features = (observation*) malloc(N * sizeof(observation));
     for (int i = 0; i < N; i++) {
-        features[i].features = data[i];
         // random initialize group
         // not random for now so we can get consistent results while testing
-        features[i].group = i % k;
+        data[i].group = i % k;
     }
 
     uint* D = (uint*) malloc(N * sizeof(uint));
@@ -91,8 +89,8 @@ feature_type** kmeans(feature_type** data, int N, int f_size) {
 
         for (int i = 0; i < N; i++) {
             // when we multi-thread it later we will need to implement proper locking
-            add_vector_to_dest(Zsums[features[i].group],features[i].features,f_size);
-            Zcounts[features[i].group]++;
+            add_vector_to_dest(Zsums[data[i].group],data[i].features,f_size);
+            Zcounts[data[i].group]++;
         }
 
         for (int i = 0; i < k; i++) {
@@ -104,12 +102,12 @@ feature_type** kmeans(feature_type** data, int N, int f_size) {
 
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < k; j++) {
-                vector_subtract_abs(temp,features[i].features, Z[j], f_size);
+                vector_subtract_abs(temp,data[i].features, Z[j], f_size);
                 vector_elementwise_square(temp,temp,f_size);
                 temp_d = sum(temp, f_size);
                 if(temp_d < D[i]) {
                     D[i] = temp_d;
-                    features[i].group = j;
+                    data[i].group = j;
                 }
 
             }
@@ -123,6 +121,10 @@ feature_type** kmeans(feature_type** data, int N, int f_size) {
         stop_looping = fabs(Jscore - prev_j) < fabs(threshold * Jscore) || iterations >= max_iterations;
         prev_j = Jscore;
     }
-
-    return Z;
+    observation* means = (observation*) malloc(k * sizeof(observation));
+    for(size_t i = 0; i < k; i++) {
+        means[i].features = Z[i];
+        means[i].group = i;
+    }
+    return means;
 }

@@ -4,7 +4,9 @@
 #include <memory.h>
 #include <strings.h>
 
-#define k 20
+#define k 32
+#define BLOCK_SIZE 16
+#define ROW_SIZE 32
 
 
 // if source data is images we will likely have 0-255 pixel values
@@ -21,7 +23,13 @@ struct observation {
 };
 typedef struct observation observation;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+observation* kmeans(observation* data, int N, int f_size);
+#ifdef __cplusplus
+}
+#endif
 
-feature_type** kmeans(feature_type** data, int N, int f_size);
 
 observation* kmeans_gpu(observation* data, size_t N, size_t h, size_t w, size_t d);

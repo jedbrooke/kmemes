@@ -20,17 +20,17 @@ int main(int argc, char const *argv[])
 
     int N = 60000;
     feature_type* data_all = (feature_type *) malloc(N * MNIST_DATA_SIZE * sizeof(feature_type*));
-    feature_type** data = (feature_type**) malloc(N * sizeof(feature_type*));
+    observation* data = (observation*) malloc(N * sizeof(feature_type*));
     for (int i = 0; i < N; i++) {
         // read in one digit
         read(data_fd,&data_all[i * MNIST_DATA_SIZE],MNIST_DATA_SIZE * sizeof(feature_type));
-        data[i] = &data_all[i * MNIST_DATA_SIZE];
+        data[i].features = &data_all[i * MNIST_DATA_SIZE];
     }
 
     fclose(data_fp);
 
     // run kmeans
-    feature_type** means = kmeans(data, N, MNIST_DATA_SIZE);
+    observation* means = kmeans(data, N, MNIST_DATA_SIZE);
 
     // save the kmeans to a file so we can view them with a python script
     FILE* output_fp = fopen(output_file,"w");
@@ -40,7 +40,7 @@ int main(int argc, char const *argv[])
     }
     for (int i = 0; i < k; i++) {
         for (int j = 0; j < MNIST_DATA_SIZE; j++) {
-            fprintf(output_fp,"%u,",means[i][j]);
+            fprintf(output_fp,"%u,",means[i].features[j]);
         }
         fprintf(output_fp,"\n");
     }
